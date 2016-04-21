@@ -1,0 +1,81 @@
+{**
+ * @param string   $basePath web base path
+ * @param array    $flashes  flash messages
+ *}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+	<!--<link rel="stylesheet" href="{$basePath}/css/style.css">-->
+	<link rel="shortcut icon" href="{$basePath}/favicon.ico">
+  <meta name="author" content="petrsyrny.cz">
+	<title>{ifset title}{include title|striptags} | {/ifset} {$configParam->projectName}</title>
+	{block head}
+  <!-- Bootstrap Core CSS -->
+  <link href="{$basePath}/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- MetisMenu CSS -->
+  <link href="{$basePath}/bower_components/metisMenu/dist/metisMenu.min.css" rel="stylesheet">
+  <!-- DataTables CSS -->
+  <link href="{$basePath}/bower_components/datatables-plugins/integration/bootstrap/3/dataTables.bootstrap.css" rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <link href="{$basePath}/css/leon-admin.css" rel="stylesheet">  
+  <!-- Custom Fonts -->
+  <link href="{$basePath}/bower_components/font-awesome/css/font-awesome.min.css" rel="stylesheet">    
+  {/block}
+	<!--[if lt IE 9]>
+		<script src="//cdnjs.cloudflare.com/aax/libs/html5shiv/3.7.2/html5shiv.min.js"></script>
+	<![endif]-->  
+</head>
+
+<body>
+	<div n:foreach="$flashes as $flash" n:class="flash, $flash->type">{$flash->message}</div>
+
+  {if $user->isLoggedIn()}
+    <div id="wrapper">
+      <!-- Navigation -->
+      <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">    
+        {include '../templates/header-navigation.latte'}    
+        {include '../templates/sidebar-navigation.latte'}      
+      </nav>  
+      <!-- Page Content -->
+      <div id="page-wrapper">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-lg-12">
+              <h1 class="page-header" n:block="title">{include pagetitle}</h1>
+            </div>
+            <!-- /.col-lg-12 -->
+          </div>          
+          <!-- /.row -->          
+          {include content}
+        </div>
+        <!-- /.container-fluid -->
+      </div>
+      <!-- /#page-wrapper -->    
+    </div>
+    <!-- /#wrapper -->
+  {else}
+    {include content}
+  {/if}
+  
+	{block scripts}
+	<!--<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>-->
+  <!-- jQuery -->
+  <script src="{$basePath}/bower_components/jquery/dist/jquery.min.js"></script>
+  <!-- Bootstrap Core JavaScript -->
+  <script src="{$basePath}/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+  <!-- Metis Menu Plugin JavaScript -->
+  <script src="{$basePath}/bower_components/metisMenu/dist/metisMenu.min.js"></script>
+  <!-- Nette Forms JavaScript -->
+	<script src="//nette.github.io/resources/js/netteForms.min.js"></script>  
+  <!-- DataTables JavaScript -->
+  <script src="{$basePath}/bower_components/datatables/media/js/jquery.dataTables.min.js"></script>
+  <script src="{$basePath}/bower_components/datatables-plugins/integration/bootstrap/3/dataTables.bootstrap.min.js"></script>  
+  <!-- Custom Theme JavaScript -->
+  <script src="{$basePath}/js/leon-admin.js"></script>  
+	{/block}
+</body>
+</html>
