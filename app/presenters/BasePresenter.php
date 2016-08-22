@@ -9,24 +9,24 @@ use App\Model;
 abstract class BasePresenter extends Nette\Application\UI\Presenter {
   
 	/** 
-   * @var Model\Users 
-   * @inject
-   */
-	public $users;
+	* @var Model\Owners
+	* @inject
+	*/
+	public $owners;
   
-  /**
-   * @var Model\ConfigParameter
-   * @inject
-   */
-  public $configParameter;  
+	/**
+	* @var Model\ConfigParameter
+	* @inject
+	*/
+	public $configParameter;  
   
 
-  protected function startup() {
-    parent::startup();
-    $this->template->configParam = $this->configParameter;
-    //$this->configParameter->projectName = 'KOKOS';
-    //dump($this->configParameter->projectName);
-  }  
+	protected function startup() {
+		parent::startup();
+		$this->template->configParam = $this->configParameter;
+		//$this->configParameter->projectName = 'KOKOS';
+		//dump($this->configParameter->projectName);
+	}  
   
   
   

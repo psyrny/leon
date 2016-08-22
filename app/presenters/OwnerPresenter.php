@@ -7,17 +7,17 @@ use Nette;
  *
  * @author Tutin
  */
-class UserPresenter extends BasePresenter {
+class OwnerPresenter extends BasePresenter {
   
-  public function startup() {
+	public function startup() {
 		parent::startup();
 		if (!$this->user->isLoggedIn()) {
 			$this->redirect('Sign:in');
 		}
 	}  
   
-	public function renderUsers() {
-		$this->template->users = $this->users->getUsers();
+	public function renderOwners() {
+		$this->template->owners = $this->owners->getOwners();
 	}
   
 }

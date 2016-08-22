@@ -9,7 +9,7 @@ use Nette;
  */
 class DashboardPresenter extends BasePresenter {
   
-  public function startup() {
+	public function startup() {
 		parent::startup();
 		if (!$this->user->isLoggedIn()) {
 			$this->redirect('Sign:in');
@@ -17,16 +17,16 @@ class DashboardPresenter extends BasePresenter {
     //$this->configParameter->projectName = 'LOTOS';
 	}  
   
-  /**
-   * Default render view, setting variables to template
-   * notice: getUsers is injected in BasePresenter
-   * @return void variables for template
-   * @todo maybe better to call beforeRender
-   * @todo definition of privilegies and roles
-   */
-  public function renderDefault() {
-    $this->template->users = $this->users->getUsers();
-  }
+	/**
+	 * Default render view, setting variables to template
+	 * notice: getUsers is injected in BasePresenter
+	 * @return void variables for template
+	 * @todo maybe better to call beforeRender
+	 * @todo definition of privilegies and roles
+	 */
+	public function renderDefault() {
+	  $this->template->owners = $this->owners->getOwners();
+	}
   
   /*public function renderShow($id) {
     // získáme data z modelu a předáme do šablony

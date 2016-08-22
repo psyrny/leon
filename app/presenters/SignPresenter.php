@@ -22,17 +22,17 @@ class SignPresenter extends BasePresenter {
 		return $form;
 	}*/
 
-/**
+	/**
 	 * Sign-in form factory.
 	 * @return Nette\Application\UI\Form
 	 */
 	protected function createComponentSignInForm() {
-    $form = new Nette\Application\UI\Form;
+		$form = new Nette\Application\UI\Form;
 		$form->addText('email', 'Email:')
 			->setRequired('Prosím vyplňte váš email.');
 		$form->addPassword('password', 'Heslo:')
 			->setRequired('Prosím napište heslo.');
-    $form->addCheckbox('remember', 'zapamatovat');    
+		$form->addCheckbox('remember', 'zapamatovat');    
 		$form->addSubmit('send', 'Přihlásit se');
 		// call method signInFormSucceeded() on success
 		$form->onSuccess[] = array($this, 'signInFormSucceeded');
@@ -57,11 +57,11 @@ class SignPresenter extends BasePresenter {
 		$this->redirect('Homepage:');
 	}  
   
-  /**
-   * Logout action
-   */
+	/**
+	* Logout action
+	*/
 	public function actionOut() {
-    $this->getUser()->logout();
+		$this->getUser()->logout();
 		$this->flashMessage('Odhlášen');
 		$this->redirect('in');
 	}

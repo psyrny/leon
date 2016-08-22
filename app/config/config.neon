@@ -22,9 +22,9 @@ session:
 
 
 services:
-	- App\Model\UserManager
+	- App\Model\OwnerManager
 	#- App\Forms\SignFormFactory
 	configParameter: App\Model\ConfigParameter(%configParameters%)
-	users: App\Model\Users
+	owner: App\Model\Owners
 	router: App\RouterFactory::createRouter
 

@@ -7,14 +7,16 @@ use Nette\Security\Passwords;
 /**
  * Users management.
  */
-class UserManager extends Nette\Object implements Nette\Security\IAuthenticator {
+class OwnerManager extends Nette\Object implements Nette\Security\IAuthenticator {
 	
   const
-		TABLE_NAME = 'user',
+		TABLE_NAME = '_owner', // user
+		COLUMN_FIRSTNAME = 'firstname',
 		COLUMN_ID = 'id',
 		COLUMN_EMAIL = 'email',
-		COLUMN_PASSWORD_HASH = 'password',
-		COLUMN_ROLE = 'role';
+		COLUMN_PASSWORD_HASH = 'pass', //password
+		COLUMN_DT_REGISTRATION = 'dt_registration',
+		COLUMN_ROLE = 'idrole'; // role
 
 	/** @var Nette\Database\Context */
 	private $database;
@@ -34,14 +36,12 @@ class UserManager extends Nette\Object implements Nette\Security\IAuthenticator 
 
 		$row = $this->database->table(self::TABLE_NAME)->where(self::COLUMN_EMAIL, $email)->fetch();
     
-    \Tracy\Debugger::barDump(array('email'=>$email,'pass'=>$password), 'Login form input');
+		\Tracy\Debugger::barDump(array('email'=>$email,'pass'=>$password), 'Login form input');
     
 		if (!$row) {
-			throw new Nette\Security\AuthenticationException('Zadán špatný email.', self::IDENTITY_NOT_FOUND);
-
+			throw new Nette\Security\AuthenticationException('Přihlášení se nezdařilo, zkontrolujte zadané údaje.', self::IDENTITY_NOT_FOUND);
 		} elseif (!Passwords::verify($password, $row[self::COLUMN_PASSWORD_HASH])) {
-			throw new Nette\Security\AuthenticationException('Špatné heslo.', self::INVALID_CREDENTIAL);
-
+			throw new Nette\Security\AuthenticationException('Špatné přihlašovací údaje', self::INVALID_CREDENTIAL);
 		} elseif (Passwords::needsRehash($row[self::COLUMN_PASSWORD_HASH])) {
 			$row->update(array(
 				self::COLUMN_PASSWORD_HASH => Passwords::hash($password),
@@ -55,16 +55,19 @@ class UserManager extends Nette\Object implements Nette\Security\IAuthenticator 
 
 
 	/**
-	 * Adds new user.
+	 * Adds new owner.
 	 * @param  string
 	 * @param  string
 	 * @return void
 	 */
-	public function add($email, $password) {
+	public function addOwner($firstname, $email, $password) {
 		try {
 			$this->database->table(self::TABLE_NAME)->insert(array(
+				self::COLUMN_FIRSTNAME => $firstname,
 				self::COLUMN_EMAIL => $email,
 				self::COLUMN_PASSWORD_HASH => Passwords::hash($password),
+				self::COLUMN_DT_REGISTRATION => date('Y-m-d H:i:s'),
+				'accountno' => date('ymdHis') 
 			));
 		} catch (Nette\Database\UniqueConstraintViolationException $e) {
 			throw new DuplicateNameException;

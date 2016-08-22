@@ -5,10 +5,12 @@
   <div class="row">
     <div class="col-md-4 col-md-offset-4">
       <div class="login-panel panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title"><strong>{$configParam->projectName}</strong> {$configParam->version}</h3>
-        </div>
         <div class="panel-body">
+		  <div class="text-center header-logo">
+			<a href="http://www.kulturne.com">
+			  <img class="img-responsive" src="{$basePath}/img/logo-black-small3.png" style="width:60%" alt="Kulturne.com"/>
+			</a>
+		  </div>		  
         {form signInForm class => "form"}
           <fieldset>
             <div class="form-group">
@@ -18,9 +20,7 @@
               {input password class => 'form-control', placeholder => "Heslo"}
             </div>
             <div class="checkbox">
-              
                 {input remember class => "form-control", value => "on"}
-              
             </div>
             {input send class => "btn btn-lg btn-block btn-success", value => "Přihlásit se"}
           </fieldset>           
@@ -30,7 +30,7 @@
       <div class="text-center f-12">
         <a href="#">zapomenuté heslo</a>
         &nbsp;|&nbsp;
-        <a href="#">nová registrace</a>
+        <a n:href="Registration:">nová registrace</a>
       </div>
     </div>
   </div>

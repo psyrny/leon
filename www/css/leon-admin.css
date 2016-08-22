@@ -17,6 +17,15 @@ div.flash {
   min-height: 568px;
   background-color: white;
 }
+
+.navbar-header,.navbar-static-top {background:#000}
+
+.navbar-top-links i { color:#fff}
+
+.navbar-top-links li a.dropdown-toggle:hover, .navbar-top-links li.dropdown:hover, .navbar-top-links li.dropdown.open {background:#B21C1E}
+
+
+
 @media (min-width: 768px) {
   #page-wrapper {
     position: inherit;
@@ -170,7 +179,11 @@ div.flash {
   overflow-y: scroll;
 }
 .login-panel {
-  margin-top: 25%;
+  margin-top: 50%;
+}
+.header-logo {
+  margin-top: 1%;
+  margin-bottom: 6%;
 }
 .flot-chart {
   display: block;
@@ -294,4 +307,7 @@ table.dataTable thead .sorting:after {
 .f-18 {
   font-size: 18px;
 }
+
+a {color:#000}
+a:hover {color:#B21C1E}
 /*# sourceMappingURL=leon-admin.css.map */

@@ -6,7 +6,7 @@ use Nette;
 
 class HomepagePresenter extends BasePresenter {
 
-  public function startup() {
+	public function startup() {
 		parent::startup();
 		if (!$this->user->isLoggedIn()) {
 			$this->redirect('Sign:in');
