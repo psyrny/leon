@@ -3,7 +3,7 @@ namespace App\Presenters;
 use Nette;
 
 /**
- * Description of UserPresenter
+ * Description of OwnerPresenter
  *
  * @author Tutin
  */

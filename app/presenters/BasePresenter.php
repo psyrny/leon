@@ -36,7 +36,7 @@ abstract class BasePresenter extends Nette\Application\UI\Presenter {
 	 * @param Model\Users $users
 	 */
 	/*public function injectUsers(Model\Users $users) {
-    $this->users = $users;
+		$this->users = $users;
 	}*/  
   
 }

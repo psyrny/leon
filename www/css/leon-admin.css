@@ -310,4 +310,8 @@ table.dataTable thead .sorting:after {
 
 a {color:#000}
 a:hover {color:#B21C1E}
+
+.flash.success {background: #B0CEAB; border:0 none; font-weight: 700}
+.flash.alert{background: #E05350; color:#fff;  border:0 none; font-weight: 700}
+
 /*# sourceMappingURL=leon-admin.css.map */

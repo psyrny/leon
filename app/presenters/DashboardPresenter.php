@@ -14,18 +14,18 @@ class DashboardPresenter extends BasePresenter {
 		if (!$this->user->isLoggedIn()) {
 			$this->redirect('Sign:in');
 		}
-    //$this->configParameter->projectName = 'LOTOS';
+		//$this->configParameter->projectName = 'LOTOS';
 	}  
   
 	/**
 	 * Default render view, setting variables to template
-	 * notice: getUsers is injected in BasePresenter
+	 * notice: getOwners is injected in BasePresenter
 	 * @return void variables for template
 	 * @todo maybe better to call beforeRender
 	 * @todo definition of privilegies and roles
 	 */
 	public function renderDefault() {
-	  $this->template->owners = $this->owners->getOwners();
+		$this->template->owners = $this->owners->getOwners();
 	}
   
   /*public function renderShow($id) {

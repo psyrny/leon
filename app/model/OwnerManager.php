@@ -5,11 +5,11 @@ use Nette\Security\Passwords;
 
 
 /**
- * Users management.
+ * Owner management.
  */
 class OwnerManager extends Nette\Object implements Nette\Security\IAuthenticator {
 	
-  const
+	const
 		TABLE_NAME = '_owner', // user
 		COLUMN_FIRSTNAME = 'firstname',
 		COLUMN_ID = 'id',
@@ -23,7 +23,7 @@ class OwnerManager extends Nette\Object implements Nette\Security\IAuthenticator
 
 	public function __construct(Nette\Database\Context $database) {
 		$this->database = $database;
-    //$this->add('petr.syrny@centrum.cz','Krutor11');
+		//$this->add('petr.syrny@centrum.cz','Krutor11');
 	}
 
 	/**
@@ -55,9 +55,10 @@ class OwnerManager extends Nette\Object implements Nette\Security\IAuthenticator
 
 
 	/**
-	 * Adds new owner.
-	 * @param  string
-	 * @param  string
+	 * Prida noveho ownera
+	 * @param  string $firstname - jmeno
+	 * @param  string $email - email
+	 * @param  string $password - heslo
 	 * @return void
 	 */
 	public function addOwner($firstname, $email, $password) {
@@ -72,6 +73,13 @@ class OwnerManager extends Nette\Object implements Nette\Security\IAuthenticator
 		} catch (Nette\Database\UniqueConstraintViolationException $e) {
 			throw new DuplicateNameException;
 		}
+	}
+	
+	/**
+	 * Updatuje ownera
+	 */
+	public function updateOwner($idowner) {
+		if (!$idowner) return;
 	}
 
 }

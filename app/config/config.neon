@@ -25,6 +25,6 @@ services:
 	- App\Model\OwnerManager
 	#- App\Forms\SignFormFactory
 	configParameter: App\Model\ConfigParameter(%configParameters%)
-	owner: App\Model\Owners
+	owners: App\Model\Owners
 	router: App\RouterFactory::createRouter
 

@@ -8,6 +8,7 @@ class HomepagePresenter extends BasePresenter {
 
 	public function startup() {
 		parent::startup();
+		$this->redirect('Dashboard:');
 		if (!$this->user->isLoggedIn()) {
 			$this->redirect('Sign:in');
 		}
