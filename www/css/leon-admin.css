@@ -6,8 +6,9 @@ div.flash {
   background: #FFF9D7;
   border: 1px solid #E2C822;
   padding: 1em;
-  margin: 1em;
+  margin: 1em 0;
   text-align: center;
+  border-radius: 4px;
 }
 #wrapper {
   width: 100%;
@@ -24,6 +25,7 @@ div.flash {
 
 .navbar-top-links li a.dropdown-toggle:hover, .navbar-top-links li.dropdown:hover, .navbar-top-links li.dropdown.open {background:#B21C1E}
 
+.nav .open > a, .nav .open > a:hover, .nav .open > a:focus {background:#B21C1E !important}
 
 
 @media (min-width: 768px) {
@@ -311,7 +313,11 @@ table.dataTable thead .sorting:after {
 a {color:#000}
 a:hover {color:#B21C1E}
 
-.flash.success {background: #B0CEAB; border:0 none; font-weight: 700}
+a.red-link {color:#B21C1E; text-decoration: none}
+a.red-link:hover {color:#B21C1E; text-decoration: underline}
+
+.flash.success {background: #E1F9D6; border:0 none; font-weight: 700}
 .flash.alert{background: #E05350; color:#fff;  border:0 none; font-weight: 700}
+.flash.error {background: #F9D6D9; border:0 none; font-weight: 700}
 
 /*# sourceMappingURL=leon-admin.css.map */
