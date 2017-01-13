@@ -11,10 +11,19 @@ class Owners extends Nette\Object {
 	
 	/** @var Nette\Database\Context */
 	private $database;
+	/** @var $tbl_owner - tabulka pro praci s uzivatelema*/
 	private $tbl_owner = '_owner';
+	/*@var $logger - promenna pro inicializaci loggeru*/
+	private $logger;
+	/*@var $log_path - variable definition of logger directory path, where save file*/
+	private $log_path;	
+	/*@var $log_filename - variable definition of logger save filename*/
+	private $log_filename = 'owners.log';	
 
 	public function __construct(Nette\Database\Context $database) {
 		$this->database = $database;
+		$this->log_path = realpath(__DIR__ . '/../..').'/www/logs/';
+		$this->logger = new Logger($this->log_path, $this->log_filename);
 	}
   
 	/**
@@ -23,6 +32,8 @@ class Owners extends Nette\Object {
 	 * @author Tutin
 	 */
 	public function getOwners() {
+		$this->logger->logit('DEBUG', 'funkce - getOwners()');
+		//$this->logger->logit('DEBUG', json_encode($this->database->table($this->tbl_owner)->order('id ASC')));
 		return $this->database->table($this->tbl_owner)->order('id ASC');
 	}  
   
@@ -34,6 +45,7 @@ class Owners extends Nette\Object {
 	 */  
 	public function getOwner($id) {
 		if($id) {
+			$this->logger->logit('DEBUG', 'funkce - getOwner(), ID = '.$id.'');
 			return $this->getOwners()->where('id', $id)->fetchAll();
 		}
 	}  
@@ -46,6 +58,7 @@ class Owners extends Nette\Object {
 	 */  	
 	public function ownerExists($email) {
 		if ($email) {
+			$this->logger->logit('DEBUG', 'funkce - ownerExists(),  email = '.$email.'');
 			return $this->getOwners()->where('email', $email)->fetchAll();
 		}
 	}

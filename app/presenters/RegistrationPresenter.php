@@ -3,6 +3,7 @@ namespace App\Presenters;
 use Nette;
 use App\Model\OwnerManager;
 use App\Model\Owners;
+use App\Model\Logger;
 use Tracy\Debugger;
 
 /**
@@ -14,9 +15,17 @@ class RegistrationPresenter extends BasePresenter {
 	
 	/** @var Nette\Database\Context */
 	private $database;	
+	/*@var $logger - promenna pro inicializaci loggeru*/
+	private $logger;
+	/*@var $log_path - variable definition of logger directory path, where save file*/
+	private $log_path;	
+	/*@var $log_filename - variable definition of logger save filename*/
+	private $log_filename = 'registrace.log';		
 	
 	public function __construct(Nette\Database\Context $database){
-	  $this->database = $database;
+		$this->database = $database;
+		$this->log_path = realpath(__DIR__ . '/../..').'/www/logs/';
+		$this->logger = new Logger($this->log_path, $this->log_filename);			  
 	}	
   
 	protected function createComponentRegisterForm() {
@@ -73,6 +82,7 @@ class RegistrationPresenter extends BasePresenter {
 		// testuju duplicitni email, uzivatel musi zadat jiny
 		if (is_array($exists)&&(count($exists)>0)) {
 			$this->flashMessage('Uživatel již existuje. Zadejte prosím jiný registační email.', 'alert');
+			$this->logger->logit("ERROR", " Uzivatel jiz existuje -  email=".$values->email."");			
 		}  else {
 		// vlozeni noveho ownera
 			$owner_m = new OwnerManager($this->database);
