@@ -78,23 +78,25 @@ class Parser extends Object
 	 */
 	public function parse($input)
 	{
-		$this->offset = 0;
-
 		if (substr($input, 0, 3) === "\xEF\xBB\xBF") { // BOM
 			$input = substr($input, 3);
 		}
+
+		$this->input = $input = str_replace("\r\n", "\n", $input);
+		$this->offset = 0;
+		$this->output = array();
+
 		if (!preg_match('##u', $input)) {
+			preg_match('#(?:[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF]{2}|[\xF0-\xF7][\x80-\xBF]{3})*+#A', $input, $m);
+			$this->offset = strlen($m[0]) + 1;
 			throw new \InvalidArgumentException('Template is not valid UTF-8 stream.');
 		}
-		$input = str_replace("\r\n", "\n", $input);
-		$this->input = $input;
-		$this->output = array();
-		$tokenCount = 0;
 
 		$this->setSyntax($this->defaultSyntax);
 		$this->setContext(self::CONTEXT_HTML_TEXT);
 		$this->lastHtmlTag = $this->syntaxEndTag = NULL;
 
+		$tokenCount = 0;
 		while ($this->offset < strlen($input)) {
 			if ($this->{'context' . $this->context[0]}() === FALSE) {
 				break;
@@ -319,7 +321,7 @@ class Parser extends Object
 
 
 	/**
-	 * @return self
+	 * @return static
 	 */
 	public function setContentType($type)
 	{
@@ -337,7 +339,7 @@ class Parser extends Object
 
 
 	/**
-	 * @return self
+	 * @return static
 	 */
 	public function setContext($context, $quote = NULL)
 	{
@@ -349,7 +351,7 @@ class Parser extends Object
 	/**
 	 * Changes macro tag delimiters.
 	 * @param  string
-	 * @return self
+	 * @return static
 	 */
 	public function setSyntax($type)
 	{
@@ -367,7 +369,7 @@ class Parser extends Object
 	 * Changes macro tag delimiters.
 	 * @param  string  left regular expression
 	 * @param  string  right regular expression
-	 * @return self
+	 * @return static
 	 */
 	public function setDelimiters($left, $right)
 	{
@@ -388,8 +390,8 @@ class Parser extends Object
 			(
 				(?P<name>\?|/?[a-z]\w*+(?:[.:]\w+)*+(?!::|\(|\\\\))|   ## ?, name, /name, but not function( or class:: or namespace\
 				(?P<noescape>!?)(?P<shortname>/?[=\~#%^&_]?)      ## !expression, !=expression, ...
-			)(?P<args>.*?)
-			(?P<modifiers>\|[a-z](?:' . self::RE_STRING . '|[^\'"/]|/(?=.))*+)?
+			)(?P<args>(?:' . self::RE_STRING . '|[^\'"])*?)
+			(?P<modifiers>(?<!\|)\|[a-z](?:' . self::RE_STRING . '|[^\'"/]|/(?=.))*+)?
 			(?P<empty>/?\z)
 		()\z~isx', $tag, $match)) {
 			if (preg_last_error()) {
@@ -424,7 +426,7 @@ class Parser extends Object
 	{
 		return $this->offset
 			? substr_count(substr($this->input, 0, $this->offset - 1), "\n") + 1
-			: 0;
+			: 1;
 	}
 
 

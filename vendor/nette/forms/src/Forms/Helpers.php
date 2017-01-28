@@ -112,12 +112,15 @@ class Helpers extends Nette\Object
 				);
 				if ($rule->branch->getToggles()) {
 					$item['toggle'] = $rule->branch->getToggles();
+				} elseif (!$item['rules']) {
+					continue;
 				}
 			} else {
 				$item = array('op' => ($rule->isNegative ? '~' : '') . $op, 'msg' => Validator::formatMessage($rule, FALSE));
 			}
 
 			if (is_array($rule->arg)) {
+				$item['arg'] = array();
 				foreach ($rule->arg as $key => $value) {
 					$item['arg'][$key] = $value instanceof IControl ? array('control' => $value->getHtmlName()) : $value;
 				}

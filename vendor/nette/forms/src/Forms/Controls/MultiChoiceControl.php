@@ -50,7 +50,8 @@ abstract class MultiChoiceControl extends BaseControl
 	/**
 	 * Sets selected items (by keys).
 	 * @param  array
-	 * @return self
+	 * @return static
+	 * @internal
 	 */
 	public function setValue($values)
 	{
@@ -111,7 +112,7 @@ abstract class MultiChoiceControl extends BaseControl
 	 * Sets items from which to choose.
 	 * @param  array
 	 * @param  bool
-	 * @return self
+	 * @return static
 	 */
 	public function setItems(array $items, $useKeys = TRUE)
 	{
@@ -143,7 +144,7 @@ abstract class MultiChoiceControl extends BaseControl
 	/**
 	 * Disables or enables control or items.
 	 * @param  bool|array
-	 * @return self
+	 * @return static
 	 */
 	public function setDisabled($value = TRUE)
 	{

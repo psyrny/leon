@@ -1,8 +1,8 @@
 <?php
 
 /**
- * This file is part of the Nette Framework (http://nette.org)
- * Copyright (c) 2004 David Grudl (http://davidgrudl.com)
+ * This file is part of the Nette Framework (https://nette.org)
+ * Copyright (c) 2004 David Grudl (https://davidgrudl.com)
  */
 
 namespace Nette\Http;
@@ -177,7 +177,7 @@ class SessionSection extends Nette\Object implements \IteratorAggregate, \ArrayA
 	 * Sets the expiration of the section or specific variables.
 	 * @param  string|int|\DateTime  time, value 0 means "until the browser is closed"
 	 * @param  mixed   optional list of variables / single variable to expire
-	 * @return self
+	 * @return static
 	 */
 	public function setExpiration($time, $variables = NULL)
 	{
@@ -211,7 +211,7 @@ class SessionSection extends Nette\Object implements \IteratorAggregate, \ArrayA
 	{
 		$this->start();
 		foreach (is_array($variables) ? $variables : array($variables) as $variable) {
-			unset($this->meta['']['T'], $this->meta['']['B']);
+			unset($this->meta[$variable]['T'], $this->meta[$variable]['B']);
 		}
 	}
 

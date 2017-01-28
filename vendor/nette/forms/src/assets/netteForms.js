@@ -13,15 +13,18 @@
 	} else if (typeof module === 'object' && typeof module.exports === 'object') {
 		module.exports = factory(global);
 	} else {
+		var init = !global.Nette || !global.Nette.noInit;
 		global.Nette = factory(global);
-		global.Nette.initOnLoad();
+		if (init) {
+			global.Nette.initOnLoad();
+		}
 	}
 
 }(typeof window !== 'undefined' ? window : this, function(window) {
 
 'use strict';
 
-var Nette = {};
+var Nette = {version: '2.3'};
 
 /**
  * Attaches a handler to an event for the element.
@@ -116,7 +119,7 @@ Nette.getEffectiveValue = function(elem) {
 /**
  * Validates form element against given rules.
  */
-Nette.validateControl = function(elem, rules, onlyCheck, value) {
+Nette.validateControl = function(elem, rules, onlyCheck, value, emptyOptional) {
 	elem = elem.tagName ? elem : elem[0]; // RadioNodeList
 	rules = rules || Nette.parseJSON(elem.getAttribute('data-nette-rules'));
 	value = value === undefined ? {value: Nette.getEffectiveValue(elem)} : value;
@@ -126,15 +129,20 @@ Nette.validateControl = function(elem, rules, onlyCheck, value) {
 			op = rule.op.match(/(~)?([^?]+)/),
 			curElem = rule.control ? elem.form.elements.namedItem(rule.control) : elem;
 
-		if (!curElem) {
-			continue;
-		}
-
 		rule.neg = op[1];
 		rule.op = op[2];
 		rule.condition = !!rule.rules;
-		curElem = curElem.tagName ? curElem : curElem[0]; // RadioNodeList
 
+		if (!curElem) {
+			continue;
+		} else if (rule.op === 'optional') {
+			emptyOptional = !Nette.validateRule(elem, ':filled', null, value);
+			continue;
+		} else if (emptyOptional && !rule.condition && rule.op !== ':filled') {
+			continue;
+		}
+
+		curElem = curElem.tagName ? curElem : curElem[0]; // RadioNodeList
 		var curValue = elem === curElem ? value : {value: Nette.getEffectiveValue(curElem)},
 			success = Nette.validateRule(curElem, rule.op, rule.arg, curValue);
 
@@ -145,7 +153,7 @@ Nette.validateControl = function(elem, rules, onlyCheck, value) {
 		}
 
 		if (rule.condition && success) {
-			if (!Nette.validateControl(elem, rule.rules, onlyCheck, value)) {
+			if (!Nette.validateControl(elem, rule.rules, onlyCheck, value, rule.op === ':blank' ? false : emptyOptional)) {
 				return false;
 			}
 		} else if (!rule.condition && !success) {
@@ -162,6 +170,14 @@ Nette.validateControl = function(elem, rules, onlyCheck, value) {
 			return false;
 		}
 	}
+
+	if (elem.type === 'number' && !elem.validity.valid) {
+		if (!onlyCheck) {
+			Nette.addError(elem, 'Please enter a valid value.');
+		}
+		return false;
+	}
+
 	return true;
 };
 
@@ -273,6 +289,9 @@ Nette.validateRule = function(elem, op, arg, value) {
 
 Nette.validators = {
 	filled: function(elem, arg, val) {
+		if (elem.type === 'number' && elem.validity.badInput) {
+			return true;
+		}
 		return val !== '' && val !== false && val !== null
 			&& (!Nette.isArray(val) || !!val.length)
 			&& (!window.FileList || !(val instanceof window.FileList) || val.length);
@@ -290,13 +309,21 @@ Nette.validators = {
 		if (arg === undefined) {
 			return null;
 		}
+
+		function toString(val) {
+			if (typeof val === 'number' || typeof val === 'string') {
+				return '' + val;
+			} else {
+				return val === true ? '1' : '';
+			}
+		}
+
 		val = Nette.isArray(val) ? val : [val];
 		arg = Nette.isArray(arg) ? arg : [arg];
 		loop:
 		for (var i1 = 0, len1 = val.length; i1 < len1; i1++) {
 			for (var i2 = 0, len2 = arg.length; i2 < len2; i2++) {
-				/* jshint eqeqeq: false */
-				if (val[i1] == arg[i2]) {
+				if (toString(val[i1]) === toString(arg[i2])) {
 					continue loop;
 				}
 			}
@@ -310,14 +337,35 @@ Nette.validators = {
 	},
 
 	minLength: function(elem, arg, val) {
+		if (elem.type === 'number') {
+			if (elem.validity.tooShort) {
+				return false
+			} else if (elem.validity.badInput) {
+				return null;
+			}
+		}
 		return val.length >= arg;
 	},
 
 	maxLength: function(elem, arg, val) {
+		if (elem.type === 'number') {
+			if (elem.validity.tooLong) {
+				return false
+			} else if (elem.validity.badInput) {
+				return null;
+			}
+		}
 		return val.length <= arg;
 	},
 
 	length: function(elem, arg, val) {
+		if (elem.type === 'number') {
+			if (elem.validity.tooShort || elem.validity.tooLong) {
+				return false
+			} else if (elem.validity.badInput) {
+				return null;
+			}
+		}
 		arg = Nette.isArray(arg) ? arg : [arg, arg];
 		return (arg[0] === null || val.length >= arg[0]) && (arg[1] === null || val.length <= arg[1]);
 	},
@@ -346,15 +394,21 @@ Nette.validators = {
 
 	pattern: function(elem, arg, val) {
 		try {
-			return typeof arg === 'string' ? (new RegExp('^(' + arg + ')$')).test(val) : null;
+			return typeof arg === 'string' ? (new RegExp('^(?:' + arg + ')$')).test(val) : null;
 		} catch (e) {}
 	},
 
 	integer: function(elem, arg, val) {
+		if (elem.type === 'number' && elem.validity.badInput) {
+			return false;
+		}
 		return (/^-?[0-9]+$/).test(val);
 	},
 
 	'float': function(elem, arg, val, value) {
+		if (elem.type === 'number' && elem.validity.badInput) {
+			return false;
+		}
 		val = val.replace(' ', '').replace(',', '.');
 		if ((/^-?[0-9]*[.,]?[0-9]+$/).test(val)) {
 			value.value = val;
@@ -364,14 +418,35 @@ Nette.validators = {
 	},
 
 	min: function(elem, arg, val) {
-		return Nette.validators.range(elem, [arg, null], val);
+		if (elem.type === 'number') {
+			if (elem.validity.rangeUnderflow) {
+				return false
+			} else if (elem.validity.badInput) {
+				return null;
+			}
+		}
+		return arg === null || parseFloat(val) >= arg;
 	},
 
 	max: function(elem, arg, val) {
-		return Nette.validators.range(elem, [null, arg], val);
+		if (elem.type === 'number') {
+			if (elem.validity.rangeOverflow) {
+				return false
+			} else if (elem.validity.badInput) {
+				return null;
+			}
+		}
+		return arg === null || parseFloat(val) <= arg;
 	},
 
 	range: function(elem, arg, val) {
+		if (elem.type === 'number') {
+			if (elem.validity.rangeUnderflow || elem.validity.rangeOverflow) {
+				return false
+			} else if (elem.validity.badInput) {
+				return null;
+			}
+		}
 		return Nette.isArray(arg) ?
 			((arg[0] === null || parseFloat(val) >= arg[0]) && (arg[1] === null || parseFloat(val) <= arg[1])) : null;
 	},

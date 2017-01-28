@@ -1,8 +1,8 @@
 <?php
 
 /**
- * This file is part of the Nette Framework (http://nette.org)
- * Copyright (c) 2004 David Grudl (http://davidgrudl.com)
+ * This file is part of the Nette Framework (https://nette.org)
+ * Copyright (c) 2004 David Grudl (https://davidgrudl.com)
  */
 
 namespace Nette\Http;
@@ -12,14 +12,6 @@ use Nette;
 
 /**
  * Provides access to session sections as well as session settings and management methods.
- *
- * @property-read bool $started
- * @property-read string $id
- * @property   string $name
- * @property-read \ArrayIterator $iterator
- * @property   array $options
- * @property-write $savePath
- * @property-write ISessionStorage $storage
  */
 class Session extends Nette\Object
 {
@@ -251,7 +243,7 @@ class Session extends Nette\Object
 	/**
 	 * Sets the session name to a specified one.
 	 * @param  string
-	 * @return self
+	 * @return static
 	 */
 	public function setName($name)
 	{
@@ -362,7 +354,7 @@ class Session extends Nette\Object
 	/**
 	 * Sets session options.
 	 * @param  array
-	 * @return self
+	 * @return static
 	 * @throws Nette\NotSupportedException
 	 * @throws Nette\InvalidStateException
 	 */
@@ -449,7 +441,7 @@ class Session extends Nette\Object
 	/**
 	 * Sets the amount of time allowed between requests before the session will be terminated.
 	 * @param  string|int|\DateTime  time, value 0 means "until the browser is closed"
-	 * @return self
+	 * @return static
 	 */
 	public function setExpiration($time)
 	{
@@ -474,7 +466,7 @@ class Session extends Nette\Object
 	 * @param  string  path
 	 * @param  string  domain
 	 * @param  bool    secure
-	 * @return self
+	 * @return static
 	 */
 	public function setCookieParameters($path, $domain = NULL, $secure = NULL)
 	{
@@ -498,7 +490,7 @@ class Session extends Nette\Object
 
 	/**
 	 * Sets path of the directory used to save session data.
-	 * @return self
+	 * @return static
 	 */
 	public function setSavePath($path)
 	{
@@ -510,7 +502,7 @@ class Session extends Nette\Object
 
 	/**
 	 * Sets user session storage for PHP < 5.4. For PHP >= 5.4, use setHandler().
-	 * @return self
+	 * @return static
 	 */
 	public function setStorage(ISessionStorage $storage)
 	{
@@ -527,7 +519,7 @@ class Session extends Nette\Object
 
 	/**
 	 * Sets user session handler.
-	 * @return self
+	 * @return static
 	 */
 	public function setHandler(\SessionHandlerInterface $handler)
 	{
@@ -545,10 +537,6 @@ class Session extends Nette\Object
 	 */
 	private function sendCookie()
 	{
-		if (!headers_sent() && ob_get_level() && ob_get_length()) {
-			trigger_error('Possible problem: you are starting session while already having some data in output buffer. This may not work if the outputted data grows. Try starting the session earlier.', E_USER_NOTICE);
-		}
-
 		$cookie = $this->getCookieParameters();
 		$this->response->setCookie(
 			session_name(), session_id(),

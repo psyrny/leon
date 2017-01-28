@@ -16,7 +16,7 @@ use ErrorException;
  */
 class Debugger
 {
-	const VERSION = '2.3.7';
+	const VERSION = '2.3.12';
 
 	/** server modes {@link Debugger::enable()} */
 	const
@@ -32,11 +32,17 @@ class Debugger
 	/** @var bool in production mode is suppressed any debugging output */
 	public static $productionMode = self::DETECT;
 
+	/** @var bool whether to display debug bar in development mode */
+	public static $showBar = TRUE;
+
 	/** @var bool {@link Debugger::enable()} */
 	private static $enabled = FALSE;
 
 	/** @var string reserved memory; also prevents double rendering */
 	private static $reserved;
+
+	/** @var int initial output buffer level */
+	private static $obLevel;
 
 	/********************* errors and exceptions reporting ****************d*g**/
 
@@ -97,6 +103,9 @@ class Debugger
 	/** @var string custom static error template */
 	public static $errorTemplate;
 
+	/** @var array */
+	private static $cpuUsage;
+
 	/********************* services ****************d*g**/
 
 	/** @var BlueScreen */
@@ -130,13 +139,14 @@ class Debugger
 	 */
 	public static function enable($mode = NULL, $logDirectory = NULL, $email = NULL)
 	{
-		self::$reserved = str_repeat('t', 3e5);
-		self::$time = isset($_SERVER['REQUEST_TIME_FLOAT']) ? $_SERVER['REQUEST_TIME_FLOAT'] : microtime(TRUE);
-		error_reporting(E_ALL | E_STRICT);
-
 		if ($mode !== NULL || self::$productionMode === NULL) {
 			self::$productionMode = is_bool($mode) ? $mode : !self::detectDebugMode($mode);
 		}
+
+		self::$reserved = str_repeat('t', 3e5);
+		self::$time = isset($_SERVER['REQUEST_TIME_FLOAT']) ? $_SERVER['REQUEST_TIME_FLOAT'] : microtime(TRUE);
+		self::$obLevel = ob_get_level();
+		self::$cpuUsage = !self::$productionMode && function_exists('getrusage') ? getrusage() : NULL;
 
 		// logging configuration
 		if ($email !== NULL) {
@@ -163,6 +173,7 @@ class Debugger
 		) {
 			self::exceptionHandler(new \RuntimeException("Unable to set 'display_errors' because function ini_set() is disabled."));
 		}
+		error_reporting(E_ALL | E_STRICT);
 
 		if (!self::$enabled) {
 			register_shutdown_function(array(__CLASS__, 'shutdownHandler'));
@@ -204,7 +215,9 @@ class Debugger
 				FALSE
 			);
 
-		} elseif (!connection_aborted() && !self::$productionMode && self::isHtmlMode()) {
+		} elseif (self::$showBar && !connection_aborted() && !self::$productionMode && self::isHtmlMode()) {
+			self::$reserved = NULL;
+			self::removeOutputBuffers(FALSE);
 			self::getBar()->render();
 		}
 	}
@@ -225,14 +238,17 @@ class Debugger
 
 		if (!headers_sent()) {
 			$protocol = isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.1';
-			$code = isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE ') !== FALSE ? 503 : 500;
-			header("$protocol $code", TRUE, $code);
+			$code = isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE ') !== FALSE
+				? '503 Service Unavailable'
+				: '500 Internal Server Error';
+			header("$protocol $code");
 			if (self::isHtmlMode()) {
 				header('Content-Type: text/html; charset=UTF-8');
 			}
 		}
 
 		Helpers::improveException($exception);
+		self::removeOutputBuffers(TRUE);
 
 		if (self::$productionMode) {
 			try {
@@ -251,7 +267,9 @@ class Debugger
 
 		} elseif (!connection_aborted() && self::isHtmlMode()) {
 			self::getBlueScreen()->render($exception);
-			self::getBar()->render();
+			if (self::$showBar) {
+				self::getBar()->render();
+			}
 
 		} else {
 			self::fireLog($exception);
@@ -339,10 +357,6 @@ class Debugger
 			$e = new ErrorException($message, 0, $severity, $file, $line);
 			$e->context = $context;
 			$e->skippable = TRUE;
-			do {
-				$level = ob_get_level();
-				@ob_end_clean(); // @ may not exist or is not removable
-			} while ($level !== ob_get_level());
 			self::exceptionHandler($e);
 		}
 
@@ -375,6 +389,22 @@ class Debugger
 	}
 
 
+	private static function removeOutputBuffers($errorOccurred)
+	{
+		while (ob_get_level() > self::$obLevel) {
+			$tmp = ob_get_status(TRUE);
+			$status = end($tmp);
+			if (in_array($status['name'], array('ob_gzhandler', 'zlib output compression'))) {
+				break;
+			}
+			$fnc = $status['chunk_size'] || !$errorOccurred ? 'ob_end_flush' : 'ob_end_clean';
+			if (!@$fnc()) { // @ may be not removable
+				break;
+			}
+		}
+	}
+
+
 	/********************* services ****************d*g**/
 
 
@@ -402,7 +432,8 @@ class Debugger
 	{
 		if (!self::$bar) {
 			self::$bar = new Bar;
-			self::$bar->addPanel(new DefaultBarPanel('info'), 'Tracy:info');
+			self::$bar->addPanel($info = new DefaultBarPanel('info'), 'Tracy:info');
+			$info->cpuUsage = self::$cpuUsage;
 			self::$bar->addPanel(new DefaultBarPanel('errors'), 'Tracy:errors'); // filled by errorHandler()
 		}
 		return self::$bar;
@@ -457,7 +488,7 @@ class Debugger
 	public static function dump($var, $return = FALSE)
 	{
 		if ($return) {
-			ob_start();
+			ob_start(function () {});
 			Dumper::dump($var, array(
 				Dumper::DEPTH => self::$maxDepth,
 				Dumper::TRUNCATE => self::$maxLen,

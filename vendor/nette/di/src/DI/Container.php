@@ -52,7 +52,7 @@ class Container extends Nette\Object
 	 * Adds the service to the container.
 	 * @param  string
 	 * @param  object
-	 * @return self
+	 * @return static
 	 */
 	public function addService($name, $service)
 	{
@@ -103,6 +103,26 @@ class Container extends Nette\Object
 			$this->registry[$name] = $this->createService($name);
 		}
 		return $this->registry[$name];
+	}
+
+
+	/**
+	 * Gets the service type by name.
+	 * @param  string
+	 * @return string
+	 * @throws MissingServiceException
+	 */
+	public function getServiceType($name)
+	{
+		if (isset($this->meta[self::ALIASES][$name])) {
+			return $this->getServiceType($this->meta[self::ALIASES][$name]);
+
+		} elseif (isset($this->meta[self::SERVICES][$name])) {
+			return $this->meta[self::SERVICES][$name];
+
+		} else {
+			throw new MissingServiceException("Service '$name' not found.");
+		}
 	}
 
 

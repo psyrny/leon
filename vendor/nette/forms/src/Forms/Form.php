@@ -22,6 +22,7 @@ class Form extends Container implements Nette\Utils\IHtmlString
 	const EQUAL = ':equal',
 		IS_IN = self::EQUAL,
 		NOT_EQUAL = ':notEqual',
+		IS_NOT_IN = self::NOT_EQUAL,
 		FILLED = ':filled',
 		BLANK = ':blank',
 		REQUIRED = self::FILLED,
@@ -112,13 +113,14 @@ class Form extends Container implements Nette\Utils\IHtmlString
 	 */
 	public function __construct($name = NULL)
 	{
+		parent::__construct();
 		if ($name !== NULL) {
 			$this->getElementPrototype()->id = 'frm-' . $name;
 			$tracker = new Controls\HiddenField($name);
 			$tracker->setOmitted();
 			$this[self::TRACKER_ID] = $tracker;
+			$this->setParent(NULL, $name);
 		}
-		parent::__construct(NULL, $name);
 	}
 
 
@@ -148,7 +150,7 @@ class Form extends Container implements Nette\Utils\IHtmlString
 
 	/**
 	 * Returns self.
-	 * @return self
+	 * @return static
 	 */
 	public function getForm($need = TRUE)
 	{
@@ -159,7 +161,7 @@ class Form extends Container implements Nette\Utils\IHtmlString
 	/**
 	 * Sets form's action.
 	 * @param  mixed URI
-	 * @return self
+	 * @return static
 	 */
 	public function setAction($url)
 	{
@@ -181,7 +183,7 @@ class Form extends Container implements Nette\Utils\IHtmlString
 	/**
 	 * Sets form's method.
 	 * @param  string get | post
-	 * @return self
+	 * @return static
 	 */
 	public function setMethod($method)
 	{
@@ -290,7 +292,7 @@ class Form extends Container implements Nette\Utils\IHtmlString
 
 	/**
 	 * Sets translate adapter.
-	 * @return self
+	 * @return static
 	 */
 	public function setTranslator(Nette\Localization\ITranslator $translator = NULL)
 	{
@@ -347,7 +349,8 @@ class Form extends Container implements Nette\Utils\IHtmlString
 
 	/**
 	 * Sets the submittor control.
-	 * @return self
+	 * @return static
+	 * @internal
 	 */
 	public function setSubmittedBy(ISubmitterControl $by = NULL)
 	{
@@ -473,7 +476,7 @@ class Form extends Container implements Nette\Utils\IHtmlString
 		$maxSize = ini_get('post_max_size');
 		$units = array('k' => 10, 'm' => 20, 'g' => 30);
 		if (isset($units[$ch = strtolower(substr($maxSize, -1))])) {
-			$maxSize <<= $units[$ch];
+			$maxSize = (int) $maxSize << $units[$ch];
 		}
 		if ($maxSize > 0 && $maxSize < $_SERVER['CONTENT_LENGTH']) {
 			$this->addError(sprintf(Validator::$messages[self::MAX_FILE_SIZE], $maxSize));
@@ -550,7 +553,7 @@ class Form extends Container implements Nette\Utils\IHtmlString
 
 	/**
 	 * Sets form renderer.
-	 * @return self
+	 * @return static
 	 */
 	public function setRenderer(IFormRenderer $renderer = NULL)
 	{
@@ -594,7 +597,10 @@ class Form extends Container implements Nette\Utils\IHtmlString
 		try {
 			return $this->getRenderer()->render($this);
 
+		} catch (\Throwable $e) {
 		} catch (\Exception $e) {
+		}
+		if (isset($e)) {
 			if (func_num_args()) {
 				throw $e;
 			}
@@ -625,7 +631,7 @@ class Form extends Container implements Nette\Utils\IHtmlString
 	public function getToggles()
 	{
 		$toggles = array();
-		foreach ($this->getControls() as $control) {
+		foreach ($this->getComponents(TRUE, 'Nette\Forms\Controls\BaseControl') as $control) {
 			$toggles = $control->getRules()->getToggleStates($toggles);
 		}
 		return $toggles;

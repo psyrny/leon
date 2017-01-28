@@ -68,7 +68,7 @@ class Validator extends Nette\Object
 				case 'value': return $withValue ? $rule->control->getValue() : $m[0];
 				default:
 					$args = is_array($rule->arg) ? $rule->arg : array($rule->arg);
-					$i = (int) $m[1] ? $m[1] - 1 : $i + 1;
+					$i = (int) $m[1] ? (int) $m[1] - 1 : $i + 1;
 					return isset($args[$i]) ? ($args[$i] instanceof IControl ? ($withValue ? $args[$i]->getValue() : "%$i") : $args[$i]) : '';
 			}
 		}, $message);
@@ -245,7 +245,7 @@ class Validator extends Nette\Object
 	 */
 	public static function validatePattern(IControl $control, $pattern)
 	{
-		return (bool) Strings::match($control->getValue(), "\x01^($pattern)\\z\x01u");
+		return (bool) Strings::match($control->getValue(), "\x01^(?:$pattern)\\z\x01u");
 	}
 
 

@@ -149,6 +149,16 @@ class ContainerBuilder extends Nette\Object
 
 
 	/**
+	 * Removes the specified alias.
+	 * @return void
+	 */
+	public function removeAlias($alias)
+	{
+		unset($this->aliases[$alias]);
+	}
+
+
+	/**
 	 * Gets all service aliases.
 	 * @return array
 	 */
@@ -159,7 +169,7 @@ class ContainerBuilder extends Nette\Object
 
 
 	/**
-	 * @return self
+	 * @return static
 	 */
 	public function setClassName($name)
 	{
@@ -354,7 +364,7 @@ class ContainerBuilder extends Nette\Object
 		if (count($rc->getMethods()) !== 1 || !$method || $method->isStatic()) {
 			throw new ServiceCreationException("Interface $interface used in service '$name' must have just one non-static method create() or get().");
 		}
-		$def->setImplementType($methodName = $rc->hasMethod('create') ? 'create' : 'get');
+		$def->setImplementMode($methodName = $rc->hasMethod('create') ? $def::IMPLEMENT_MODE_CREATE : $def::IMPLEMENT_MODE_GET);
 
 		if (!$def->getClass() && !$def->getEntity()) {
 			$returnType = PhpReflection::getReturnType($method);
@@ -398,6 +408,9 @@ class ContainerBuilder extends Nette\Object
 						throw new ServiceCreationException("Type hint for \${$param->getName()} in $interface::$methodName() doesn't match type hint in $class constructor.");
 					}
 					$def->getFactory()->arguments[$arg->getPosition()] = self::literal('$' . $arg->getName());
+				} elseif (!$def->getSetup()) {
+					$hint = Nette\Utils\ObjectMixin::getSuggestion(array_keys($ctorParams), $param->getName());
+					throw new ServiceCreationException("Unused parameter \${$param->getName()} when implementing method $interface::$methodName()" . ($hint ? ", did you mean \${$hint}?" : '.'));
 				}
 				$paramDef = $hint . ' ' . $param->getName();
 				if ($param->isOptional()) {
@@ -482,7 +495,7 @@ class ContainerBuilder extends Nette\Object
 
 	private function checkCase($class)
 	{
-		if (class_exists($class) && ($rc = new ReflectionClass($class)) && $class !== $rc->getName()) {
+		if ((class_exists($class) || interface_exists($class)) && ($rc = new ReflectionClass($class)) && $class !== $rc->getName()) {
 			throw new ServiceCreationException("Case mismatch on class name '$class', correct name is '{$rc->getName()}'.");
 		}
 	}
@@ -490,7 +503,7 @@ class ContainerBuilder extends Nette\Object
 
 	/**
 	 * @param  string[]
-	 * @return self
+	 * @return static
 	 */
 	public function addExcludedClasses(array $classes)
 	{
@@ -501,7 +514,7 @@ class ContainerBuilder extends Nette\Object
 
 	/**
 	 * Adds a file to the list of dependencies.
-	 * @return self
+	 * @return static
 	 * @internal
 	 */
 	public function addDependency($file)
@@ -562,7 +575,7 @@ class ContainerBuilder extends Nette\Object
 					throw new ServiceCreationException('Name contains invalid characters.');
 				}
 				$containerClass->addMethod($methodName)
-					->addDocument('@return ' . ($def->getImplement() ?: $def->getClass()))
+					->addComment('@return ' . ($def->getImplement() ?: $def->getClass()))
 					->setBody($name === self::THIS_CONTAINER ? 'return $this;' : $this->generateService($name))
 					->setParameters($def->getImplement() ? array() : $this->convertParameters($def->parameters));
 			} catch (\Exception $e) {
@@ -595,7 +608,7 @@ class ContainerBuilder extends Nette\Object
 
 		$entity = $def->getFactory()->getEntity();
 		$serviceRef = $this->getServiceName($entity);
-		$factory = $serviceRef && !$def->getFactory()->arguments && !$def->getSetup() && $def->getImplementType() !== 'create'
+		$factory = $serviceRef && !$def->getFactory()->arguments && !$def->getSetup() && $def->getImplementMode() !== $def::IMPLEMENT_MODE_CREATE
 			? new Statement(array('@' . self::THIS_CONTAINER, 'getService'), array($serviceRef))
 			: $def->getFactory();
 
@@ -638,7 +651,7 @@ class ContainerBuilder extends Nette\Object
 			->addParameter('container')
 				->setTypeHint($this->className);
 
-		$factoryClass->addMethod($def->getImplementType())
+		$factoryClass->addMethod($def->getImplementMode())
 			->setParameters($this->convertParameters($def->parameters))
 			->setBody(str_replace('$this', '$this->container', $code))
 			->setReturnType(PHP_VERSION_ID >= 70000 ? $def->getClass() : NULL);
@@ -770,7 +783,7 @@ class ContainerBuilder extends Nette\Object
 			} elseif (substr($val, 0, 2) === '@@') {
 				$val = substr($val, 1);
 
-			} elseif (substr($val, 0, 1) === '@') {
+			} elseif (substr($val, 0, 1) === '@' && strlen($val) > 1) {
 				$pair = explode('::', $val, 2);
 				$name = $that->getServiceName($pair[0]);
 				if (isset($pair[1]) && preg_match('#^[A-Z][A-Z0-9_]*\z#', $pair[1], $m)) {
