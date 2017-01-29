@@ -9,21 +9,22 @@ use Nette;
  */
 class Owners extends Nette\Object {
 	
+	const
+		TABLE_NAME = '_owner', // user
+		COLUMN_FIRSTNAME = 'firstname',
+		COLUMN_ID = 'id',
+		COLUMN_EMAIL = 'email',
+		COLUMN_PASSWORD_HASH = 'pass', //password
+		COLUMN_DT_REGISTRATION = 'dt_registration',
+		COLUMN_ROLE = 'idrole'; // role	
+	
 	/** @var Nette\Database\Context */
 	private $database;
 	/** @var $tbl_owner - tabulka pro praci s uzivatelema*/
-	private $tbl_owner = '_owner';
-	/*@var $logger - promenna pro inicializaci loggeru*/
-	private $logger;
-	/*@var $log_path - variable definition of logger directory path, where save file*/
-	private $log_path;	
-	/*@var $log_filename - variable definition of logger save filename*/
-	private $log_filename = 'owners.log';	
+	private $tbl_owner = '_owner';	
 
 	public function __construct(Nette\Database\Context $database) {
 		$this->database = $database;
-		$this->log_path = realpath(__DIR__ . '/../..').'/www/logs/';
-		$this->logger = new Logger($this->log_path, $this->log_filename);
 	}
   
 	/**
@@ -32,8 +33,6 @@ class Owners extends Nette\Object {
 	 * @author Tutin
 	 */
 	public function getOwners() {
-		$this->logger->logit('DEBUG', 'funkce - getOwners()');
-		//$this->logger->logit('DEBUG', json_encode($this->database->table($this->tbl_owner)->order('id ASC')));
 		return $this->database->table($this->tbl_owner)->order('id ASC');
 	}  
   
@@ -45,31 +44,41 @@ class Owners extends Nette\Object {
 	 */  
 	public function getOwner($id) {
 		if($id) {
-			$this->logger->logit('DEBUG', 'funkce - getOwner(), ID = '.$id.'');
 			return $this->getOwners()->where('id', $id)->fetchAll();
 		}
 	}  
 	
 	/**
-	 * Get user row order user email
+	 * Get owner row order user email
 	 * @param int $email  - owner email, unikatni email
 	 * @return array owner row if owner exists
 	 * @author Tutin
 	 */  	
 	public function ownerExists($email) {
 		if ($email) {
-			$this->logger->logit('DEBUG', 'funkce - ownerExists(),  email = '.$email.'');
-			return $this->getOwners()->where('email', $email)->fetchAll();
+			return $this->getOwners()->where(self::COLUMN_EMAIL, $email)->fetchAll();
 		}
 	}
 	
-	/*public function addOwner($data) {
+	/**
+	 * Add new owenr to DB
+	 * @param array $data  - pole dat pro vlozeni do DB
+	 * @return object - objekt zaznamu v DB
+	 * @author Tutin
+	 * @todo vkladat i vcetne ROLE ownera
+	 */  		
+	public function addOwner($data) {
 		if($data) {
-			return $this->database->table('users')->insert($data);
+			try {
+				return $this->database->table($this->tbl_owner)->insert($data);
+			} catch (Nette\Database\UniqueConstraintViolationException $e) {
+				Debugger::log("ERROR - addOwner - uzivatel  '$data->email' jiz existuje");
+				throw new DuplicateNameException;
+			}
 		}
 	}
 
-	public function editOwner($id, $data)
+	/*public function editOwner($id, $data)
 	{
 		if($id && $data) {
 			return $this->getUsers()->where('id', $id)->update($data);
@@ -102,4 +111,8 @@ class Owners extends Nette\Object {
 	public function createOwnerFolderTree() {
 		
 	}
+}
+
+class DuplicateNameException extends \Exception {
+  
 }

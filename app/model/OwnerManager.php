@@ -2,7 +2,7 @@
 namespace App\Model;
 use Nette;
 use Nette\Security\Passwords;
-
+use Tracy\Debugger;
 
 /**
  * Owner management.
@@ -36,11 +36,14 @@ class OwnerManager extends Nette\Object implements Nette\Security\IAuthenticator
 
 		$row = $this->database->table(self::TABLE_NAME)->where(self::COLUMN_EMAIL, $email)->fetch();
     
-		\Tracy\Debugger::barDump(array('email'=>$email,'pass'=>$password), 'Login form input');
+		Debugger::log("DEBUG - LOGIN FORM data - email = $email, pass=$password");
+		Debugger::barDump(array('email'=>$email,'pass'=>$password), 'Login form input');
     
 		if (!$row) {
+			Debugger::log("ERROR - LOGIN FORM - uzivatel:   email = $email  nenalezen, spatne prihlasovaci udaje");
 			throw new Nette\Security\AuthenticationException('Přihlášení se nezdařilo, zkontrolujte zadané údaje.', self::IDENTITY_NOT_FOUND);
 		} elseif (!Passwords::verify($password, $row[self::COLUMN_PASSWORD_HASH])) {
+			Debugger::log("ERROR - LOGIN FORM -  spatne heslo");
 			throw new Nette\Security\AuthenticationException('Špatné přihlašovací údaje', self::INVALID_CREDENTIAL);
 		} elseif (Passwords::needsRehash($row[self::COLUMN_PASSWORD_HASH])) {
 			$row->update(array(
@@ -53,7 +56,6 @@ class OwnerManager extends Nette\Object implements Nette\Security\IAuthenticator
 		return new Nette\Security\Identity($row[self::COLUMN_ID], $row[self::COLUMN_ROLE], $arr);
 	}
 
-
 	/**
 	 * Prida noveho ownera
 	 * @param  string $firstname - jmeno
@@ -61,30 +63,18 @@ class OwnerManager extends Nette\Object implements Nette\Security\IAuthenticator
 	 * @param  string $password - heslo
 	 * @return void
 	 */
-	public function addOwner($firstname, $email, $password) {
+	/*public function addOwner($firstname, $email, $password) {
 		try {
 			$this->database->table(self::TABLE_NAME)->insert(array(
 				self::COLUMN_FIRSTNAME => $firstname,
 				self::COLUMN_EMAIL => $email,
 				self::COLUMN_PASSWORD_HASH => Passwords::hash($password),
-				self::COLUMN_DT_REGISTRATION => date('Y-m-d H:i:s'),
+				self::COLUMN_DT_REGISTRATION => new \DateTime,
 				'accountno' => date('ymdHis') 
 			));
 		} catch (Nette\Database\UniqueConstraintViolationException $e) {
+			Debugger::log("ERROR - LOGIN FORM - uzivatel  '$email' jiz existuje");
 			throw new DuplicateNameException;
 		}
-	}
-	
-	/**
-	 * Updatuje ownera
-	 */
-	public function updateOwner($idowner) {
-		if (!$idowner) return;
-	}
-
-}
-
-
-class DuplicateNameException extends \Exception {
-  
+	}*/
 }

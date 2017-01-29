@@ -1,9 +1,7 @@
 <?php
 namespace App\Presenters;
 use Nette;
-use App\Model\OwnerManager;
-use App\Model\Owners;
-use App\Model\Logger;
+use Nette\Security\Passwords;
 use Tracy\Debugger;
 
 /**
@@ -14,19 +12,11 @@ use Tracy\Debugger;
 class RegistrationPresenter extends BasePresenter {
 	
 	/** @var Nette\Database\Context */
-	private $database;	
-	/*@var $logger - promenna pro inicializaci loggeru*/
-	private $logger;
-	/*@var $log_path - variable definition of logger directory path, where save file*/
-	private $log_path;	
-	/*@var $log_filename - variable definition of logger save filename*/
-	private $log_filename = 'registrace.log';		
-	
+	/*private $database;	
+		
 	public function __construct(Nette\Database\Context $database){
 		$this->database = $database;
-		$this->log_path = realpath(__DIR__ . '/../..').'/www/logs/';
-		$this->logger = new Logger($this->log_path, $this->log_filename);			  
-	}	
+	}*/	
   
 	protected function createComponentRegisterForm() {
 		$form = new Nette\Application\UI\Form;
@@ -48,22 +38,29 @@ class RegistrationPresenter extends BasePresenter {
 			->addRule($form::MIN_LENGTH, "Heslo musí mít minimálně %d znaků", 8)				
 			->setRequired('Prosím zvolte si heslo.');
 		
-		/*$form->addPassword('pass', 'Choose password:')
-			->setRequired('Choose your password')
-			->addRule($form::MIN_LENGTH, 'The password is too short: it must be at least %d characters', 3);*/
-
-		/*$form->addText('pass', 'Heslo:')
-			->setType('password')
-			->setAttribute('autocomplete', 'off')
-			->setAttribute('placeholder', 'zvolte si heslo')
-			->addRule($form::EMAIL, 'Email nemá správný formát')
-			->setRequired('Prosím zvolte si heslo.');*/
-		
 		$form->addSubmit('send', 'Registrovat se');
 		// call method registerFormSucceeded() on success
 		$form->onSuccess[] = array($this, 'registerFormSucceeded');
 		return $form;
 	}  
+
+	/**
+	 * Fce. pripravi data pro vlozeni noveho ownera do DB - z registracniho formulare
+	 * @param array $values - hodnoty registracniho formulare
+	 * @return array $ownerData - pole pro zalozeni ownera do DB
+	 * @see $owners->addOwner($data)
+	 */
+	public function setNewOwnerData($values) {
+		if (!$values) return;
+		$ownerData = array(
+					'firstname' => $values->firstname,
+					'pass' =>  Passwords::hash($values->pass),
+					'email' => $values->email,
+					'dt_registration' => new \DateTime,
+					'accountno' => date('ymdHis') 
+					);
+		return $ownerData;
+	}
 	
 	/**
 	* Callback metoda pri uspesnem odeslani formulare - registrace
@@ -73,34 +70,35 @@ class RegistrationPresenter extends BasePresenter {
 	*/	
 	public function registerFormSucceeded($form, $values) {
 		
-		$owners = new  Owners($this->database);
-		$exists = $owners->ownerExists($values->email);
+		$exists = $this->owners->ownerExists($values->email);
 		
 		//Debugger::barDump($values, 'Registration form input');
 		//Debugger::barDump($exists, 'Owner exists');
 		
 		// testuju duplicitni email, uzivatel musi zadat jiny
 		if (is_array($exists)&&(count($exists)>0)) {
-			$this->flashMessage('Uživatel již existuje. Zadejte prosím jiný registační email.', 'alert');
-			$this->logger->logit("ERROR", " Uzivatel jiz existuje -  email=".$values->email."");			
+			Debugger::log("ERROR - REGISTER FORM - uzivatel : email=".$values->email." jiz existuje");
+			$this->flashMessage('Uživatel již existuje. Zadejte prosím jiný registrační email.', 'alert');
 		}  else {
-		// vlozeni noveho ownera
-			$owner_m = new OwnerManager($this->database);
-			if ($owner_m->addOwner($values->firstname, $values->email, $values->pass) ) {
-				// vytvorim strom slozek pro ownera - TODO - nejaka trida na directory v nette?
-				$owners->createOwnerFolderTree();
+			// vlozeni noveho ownera
+			if (empty($values->id)) {
+				$data = $this->setNewOwnerData($values);
+				$row = $this->owners->addOwner($data);			
+				$ownerID = $row->id;
 			}
+			// vytvorim strom slozek pro ownera - TODO - nejaka trida na directory v nette?
+			//$this->owners->createOwnerFolderTree();
+			// TODO - do debugu vlozit i ID OWNERA - last_insert_id
+			Debugger::log("DEBUG - REGISTER FORM - novy uzivatel: ID: ".$ownerID.",  email=".$values->email."");
 			$this->flashMessage('Registrace byla úspěšná. Ještě bude nutné registraci potvrdit z emailu, který jsme vám právě poslali.', 'success');
 			$this->redirect('this');			
 		}
 		
-		// TODO - kontrola delky hesla nejde - nevypise se info u inputu...
-		// TODO - osetreni vyjimky duplicity registrace - email je unikatni - DONE
-		// TODO logger do souboru i do DB - kvuli prehledu akci uzivatle?
+		
 		// TODO poslani emailu
 		// TODO vlozeni do SE
 		// TODO tvorba strukturt - owner/accountno/..ukladani hesla?
 		// TODO spravne zalozeni role - prozkoumani funkci v nette pro role
 	}  	
-  
+	
 }
