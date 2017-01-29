@@ -1,6 +1,7 @@
 <?php
 namespace App\Presenters;
 use Nette;
+use Tracy\Debugger;
 //use App\Forms\SignFormFactory;
 
 /**
@@ -27,8 +28,10 @@ class SignPresenter extends BasePresenter {
 	 * @return Nette\Application\UI\Form
 	 */
 	protected function createComponentSignInForm() {
+		//Debugger::log('Testovaci log', \Tracy\ILogger::ERROR );
 		$form = new Nette\Application\UI\Form;
 		$form->addText('email', 'Email:')
+			->addRule($form::EMAIL, 'E-mail nemá správný formát')
 			->setRequired('Prosím vyplňte váš email.');
 		$form->addPassword('password', 'Heslo:')
 			->setRequired('Prosím napište heslo.');
@@ -53,14 +56,17 @@ class SignPresenter extends BasePresenter {
 			$this->flashMessage($e->getMessage(), 'error');
 			$this->redirect('this');
 		}
+		Debugger::log("DEBUG - LOGIN FORM - prihlaseni uzivatele: $values->email");
 		$this->flashMessage('Byl jsi úspěšně přihlášen.', 'success');
 		$this->redirect('Homepage:');
 	}  
   
 	/**
 	* Logout action
+	 * https://doc.nette.org/cs/2.4/access-control
 	*/
 	public function actionOut() {
+		Debugger::log("DEBUG - LOGOUT - odhlaseni uzivatele: ". $this->user->getIdentity()->email.", ID = ".$this->user->getId().""); 
 		$this->getUser()->logout();
 		$this->flashMessage('Odhlášen');
 		$this->redirect('in');
